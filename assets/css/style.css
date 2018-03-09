@@ -1,0 +1,47 @@
+.display-4{
+    font-size:4rem;
+    text-align: right;
+    color:white;
+}
+.jumbotron{
+    background-image:url("../images/train.jpg");
+    background-size:cover;
+}
+.list-group, .border{
+    /* width:75%; */
+    margin:auto;
+}
+.title{
+    font-size:24px;
+    text-align: center;
+    background-color:#518c27;
+    color:white;
+}
+.border{
+    border:1px solid grey;
+    margin-top:20px;
+}
+.caption{
+    border: inherit; 
+    background-color: lightgrey;
+}
+.table{
+    margin-bottom:0;
+}
+form{
+    padding:10px;
+}
+.table thead th{
+    font-weight: 300px;
+    /* color:black; */
+    font-size:18px;
+}
+form label{
+    /* color:green; */
+    font-size:18px;
+}
+.btn{
+    background-color:#518c27;
+    color:white;
+    margin-top:10px;
+}
