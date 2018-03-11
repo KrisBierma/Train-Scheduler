@@ -48,7 +48,7 @@
 
     <div class="border rounded">
         <div class="title">Add Train</div>
-        <form>
+        <form id="form">
             <div class="form-group">
                 <label for="train-name">Train Name</label>
                 <input type="text" class="form-control" id="train-name" placeholder="Polar Express">
@@ -61,20 +61,32 @@
 
             <div class="row">
                 <div class="col">
-                    <label for="train-time">First Train Time (HH:MM - military time)</label>
-                    <input type="number" class="form-control" id="train-time" placeholder="21:30">
+                    <!-- min and max values needed??
+                    leave HH:MM and remove "military time"?? -->
+                    <label for="train-first-time">First Train Time (HH:MM - military time)</label>
+                    <input type="time" class="form-control" id="train-first-time" placeholder="21:30">
                 </div>
                 <div class="col">
                     <label for="train-frequency">Frequency (min)</label>
-                    <input type="number" class="form-control" id="train=frequency" placeholder="240">
+                    <input type="number" class="form-control" id="train-frequency" placeholder="240">
                 </div>
             </div>
-            <button type="submit" class="btn">Submit</button>
+            <button id="submit" type="submit" class="btn">Submit</button>
         </form>
     </div>
 
 </div><!--end container div-->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script src="assets/javascript/app.js"></script>
+
+<script
+  src="https://code.jquery.com/jquery-3.3.1.js"
+  integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+  crossorigin="anonymous"></script>
+
+<script src="https://www.gstatic.com/firebasejs/4.11.0/firebase.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script src="assets/javascript/app.js"></script>
+
 </body>
 </html>
