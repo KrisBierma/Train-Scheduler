@@ -51,7 +51,9 @@ function updateTrainNum(){
         });
         trainId=t;
         console.log(trainId);
-        return t;
+        console.log(trainId);
+        renderTable();
+        return trainId;
     });
 };
 
@@ -114,6 +116,7 @@ $("#submit").on("click", function(event){
             console.log("nextArr: "+nextArrival);
         }
         else if (time === currentTime){
+            nextArrival = time;
             console.log("nextArr: "+nextArrival);
             arrivalKnown=true;
         }
@@ -126,53 +129,87 @@ $("#submit").on("click", function(event){
     };
 
     console.log(trainId);
-    //store info for each train in database object:
-    database.ref("train-"+trainId).set({
-        trainId:trainId,
-        name:trainName,
-        destination:dest,
-        firstTime:firstTime,
-        frequency:frequency,
-        nextArrivalTime:nextArrival,
-        minutesAway:minAway,
-    });
 
     // if (snapshot.child("name").exists() && snapshot.child("otherName").exists()){
     //     set them;
     // }
 
     //create new tr and insert data into html
-    var newTableRow = $("<tr>");
-    var newDataName = $("<td id='newDataName'>");
-    var newDataDest = $("<td id='newDataDest'>");
-    var newDataFrequency = $("<td id='newDataFrequency'>");
-    var newDataNextArrival=$("<td id='newDataNextArrival'>");
-    var newDataMinutesAway=$("<td id='newDataMinutesAway'>");
+    // var newTableRow = $("<tr id="+trainId+">");
+    // var newDataName = $("<td id='newDataName"+trainId+"'>");
+    // var newDataDest = $("<td id='newDataDest"+trainId+"'>");
+    // var newDataFrequency = $("<td id='newDataFrequency"+trainId+"'>");
+    // var newDataNextArrival=$("<td id='newDataNextArrival"+trainId+"'>");
+    // var newDataMinutesAway=$("<td id='newDataMinutesAway"+trainId+"'>");
 
-    $("tbody").append(newTableRow);
-    $(newTableRow).append(newDataName, newDataDest, newDataFrequency, newDataNextArrival, newDataMinutesAway);
+    // $("tbody").append(newTableRow);
+    // $(newTableRow).append(newDataName, newDataDest, newDataFrequency, newDataNextArrival, newDataMinutesAway);
 
-    // newTableRow.attr("trainId", ??);
-    $("#newDataName").html(capUpper(trainName));
-    $("#newDataDest").html(capUpper(dest));
-    $("#newDataFrequency").html(frequency);
-    $("#newDataNextArrival").html(convertMinutes(nextArrival));
-    $("#newDataMinutesAway").html(minAway);
+    //store info for each train in database object:
+    database.ref("train-"+trainId).set({
+        trainId:trainId,
+        name:capUpper(trainName),
+        destination:capUpper(dest),
+        firstTime:firstTime,
+        frequency:frequency,
+        nextArrivalTime:nextArrival,
+        minutesAway:minAway,
+    });
+
+    // populate html with db info
+    // var r = "train-"+trainId;
+    // database.ref(r).once("value", function(snap){
+    //     console.log(snap.val());
+    //     console.log(snap.val().name);
+    //     $("#newDataName"+trainId).text(snap.val().name);
+    //     $("#newDataDest"+trainId).text(snap.val().destination);
+    //     $("#newDataFrequency"+trainId).text(snap.val().frequency);
+    //     $("#newDataNextArrival"+trainId).text(convertMinutes(snap.val().nextArrivalTime));
+    //     $("#newDataMinutesAway"+trainId).text(snap.val().minutesAway);
+    // });
 
     //increase trainNum in db by 1
     updateTrainNum();
     $("#form")[0].reset();
+    renderTable();
 });
 
-//what does this do?
-//.update to change nextArr and minAway (.set replaces everything)
-database.ref().on("value", function(snapshot){
-    console.log(snapshot.val());
-    $("#newDataNextArrival").text(snapshot.val().newDataNextArrival);
-    $("#newDataMinutesAway").text(snapshot.val().newDataMinutesAway);
-}, function(errorObject){
-    console.log("The read failed: "+ errorObject.code);
-});
+//create the table each time page loads with everything in db
+function renderTable(){
+    console.log(trainId);
+    var query=database.ref().orderByKey();
+    console.log(query);
+    query.once("value", function(snap){
+            console.log(snap);
+            snap.forEach(function(trainSnap){
+                var key=trainSnap.key;
+                var trainData=trainSnap.val();
+                var name=trainSnap.val().name;
+
+                var newTableRow = $("<tr id="+trainId+">");
+                var newDataName = $("<td id='newDataName"+trainId+"'>");
+                var newDataDest = $("<td id='newDataDest"+trainId+"'>");
+                var newDataFrequency = $("<td id='newDataFrequency"+trainId+"'>");
+                var newDataNextArrival=$("<td id='newDataNextArrival"+trainId+"'>");
+                var newDataMinutesAway=$("<td id='newDataMinutesAway"+trainId+"'>");
+
+                $("tbody").append(newTableRow);
+                $(newTableRow).append(newDataName, newDataDest, newDataFrequency, newDataNextArrival, newDataMinutesAway);
+
+                // populate html with db info
+                // var r = "train-"+trainId;
+                // database.ref(r).once("value", function(snap){
+                // console.log(snap.val());
+                // console.log(snap.val().name);
+                $("#newDataName"+trainId).text(name);
+                // $("#newDataDest"+trainId).text(snap.val().destination);
+                // $("#newDataFrequency"+trainId).text(snap.val().frequency);
+                // $("#newDataNextArrival"+trainId).text(convertMinutes(snap.val().nextArrivalTime));
+                // $("#newDataMinutesAway"+trainId).text(snap.val().minutesAway);
+            })
+        })
+};
+
 
 //converts minutes into HH:MM
 function convertMinutes(event){
