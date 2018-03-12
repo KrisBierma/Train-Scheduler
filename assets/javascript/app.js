@@ -13,13 +13,47 @@ firebase.initializeApp(config);
 
 //var to hold database info
 var database = firebase.database();
+var trainId; //unique number for each train
+var trainNum; //current number of total trains
 
-//hold trainId in database so it doesn't overwrite info or reset to 0
-var trainId=database.get(trainId);
-console.log(trainId);
+//get trainId from database; held there so current number isn't reset when doc loads
+// var t;
+// database.ref().once("value", function(trainIdSnap){
+//     console.log(trainIdSnap.val().trainNum);
+//     var t=trainIdSnap.val().trainNum;
+//     t++;
+//     console.log(t);
+//     database.ref().update({
+//         trainNum:t
+//     });
+//     trainId=t;
+//     console.log(trainId);
+//     return t;
+// });
+
 
 //reset HTML form to empty
 $("#form")[0].reset();
+
+//increases current train number by 1 when page is loaded
+updateTrainNum();
+
+//function to increase trainNum in db and make trainId=trainNum
+function updateTrainNum(){
+    var t;
+    database.ref().once("value", function(trainIdSnap){
+        console.log(trainIdSnap.val().trainNum);
+        var t=trainIdSnap.val().trainNum;
+        t++;
+        console.log(t);
+        database.ref().update({
+            trainNum:t
+        });
+        trainId=t;
+        console.log(trainId);
+        return t;
+    });
+};
 
 var currentTime;
 function getTime(){
@@ -35,9 +69,6 @@ function getTime(){
 $("#submit").on("click", function(event){
     event.preventDefault();
     getTime();
-
-    trainId++;
-    // $(".form-group").reset();
 
     //if not all included, alert
     if($("#train-name").val() ==""){
@@ -58,12 +89,11 @@ $("#submit").on("click", function(event){
     }
 
     //get info from form
-    var trainName=$("#train-name").val().trim().toUpperCase();
-    var dest=$("#train-dest").val().trim().toUpperCase();
+    var trainName=$("#train-name").val().trim();
+    var dest=$("#train-dest").val().trim();
     var firstTime=$("#train-first-time").val().trim();
     var frequency=$("#train-frequency").val().trim();
     console.log(trainName, dest, firstTime, frequency);
-    //give each entry a trainId
 
     //convert firstTime to minutes
     var f = firstTime.split(":");
@@ -80,13 +110,10 @@ $("#submit").on("click", function(event){
     while (!arrivalKnown){
         if (time > currentTime){
             nextArrival = time;
-            time=convertMinutes(time);
-            nextArrival=convertMinutes(nextArrival);
             arrivalKnown=true;
             console.log("nextArr: "+nextArrival);
         }
         else if (time === currentTime){
-            nextArrival = convertMinutes(currentTime);
             console.log("nextArr: "+nextArrival);
             arrivalKnown=true;
         }
@@ -94,11 +121,11 @@ $("#submit").on("click", function(event){
             time = parseInt(time) + parseInt(frequency);
             console.log("nextArr is time: "+time);
         };
+        var minAway = parseInt(nextArrival) - parseInt(currentTime);
+        console.log("minAway: "+minAway);
     };
 
-    var minAway = parseInt(nextArrival) - parseInt(currentTime);
-    console.log("minAway: "+minAway);
-
+    console.log(trainId);
     //store info for each train in database object:
     database.ref("train-"+trainId).set({
         trainId:trainId,
@@ -114,22 +141,37 @@ $("#submit").on("click", function(event){
     //     set them;
     // }
 
-    //create new tr and insert td from object into html
+    //create new tr and insert data into html
     var newTableRow = $("<tr>");
-    var newDataName = $("<td>"+trainName+"<td>");
-    var newDataFrequency = $("<td>"+frequency+"<td>");
-    var newDataNextArrival=$("<td>"+nextArrival+"<td>");
-    var newDataMinutesAway=$("<td>"+minAway+"<td>");
+    var newDataName = $("<td id='newDataName'>");
+    var newDataDest = $("<td id='newDataDest'>");
+    var newDataFrequency = $("<td id='newDataFrequency'>");
+    var newDataNextArrival=$("<td id='newDataNextArrival'>");
+    var newDataMinutesAway=$("<td id='newDataMinutesAway'>");
 
-    // $("form").append(newTableRow);
-    // $(newTableRow).append(newDataName, newDataFrequency, newDataNextArrival, newDataMinutesAway);
-
+    $("tbody").append(newTableRow);
+    $(newTableRow).append(newDataName, newDataDest, newDataFrequency, newDataNextArrival, newDataMinutesAway);
 
     // newTableRow.attr("trainId", ??);
-    $("#newDataName").text(trainName);
-    $("#newDataFrequency").text(frequency);
-    $("#newDataNextArrival").text(nextArrival);
-    $("#newDataMinutesAway").text(minAway);
+    $("#newDataName").html(capUpper(trainName));
+    $("#newDataDest").html(capUpper(dest));
+    $("#newDataFrequency").html(frequency);
+    $("#newDataNextArrival").html(convertMinutes(nextArrival));
+    $("#newDataMinutesAway").html(minAway);
+
+    //increase trainNum in db by 1
+    updateTrainNum();
+    $("#form")[0].reset();
+});
+
+//what does this do?
+//.update to change nextArr and minAway (.set replaces everything)
+database.ref().on("value", function(snapshot){
+    console.log(snapshot.val());
+    $("#newDataNextArrival").text(snapshot.val().newDataNextArrival);
+    $("#newDataMinutesAway").text(snapshot.val().newDataMinutesAway);
+}, function(errorObject){
+    console.log("The read failed: "+ errorObject.code);
 });
 
 //converts minutes into HH:MM
@@ -141,8 +183,15 @@ function convertMinutes(event){
     var convertedTime = h + ":" + m;
     console.log("Should be temp time in HH:MM " +convertedTime);//correct
     return convertedTime;
-}
-});
+};
+
+//Capitalize first letter of train name and destination
+function capUpper(name){
+    return name.charAt(0).toUpperCase() + name.slice(1);
+};
+
+});//end doc.ready
 
 //continually update 
 //users from different machines able to view
+//keep trains on there unless deleted, even when page reloads
