@@ -194,14 +194,13 @@ function capUpper(name){
     return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
-$(document).on("click", function(e){
+$(document).on("click", "#deleteBtn", function(e){
     console.log(e);
     var rowId=e.target.parentElement.parentElement.id;
     console.log(rowId);
     //delete row not working
     // $(rowId).deleteRow;
     database.ref().child(rowId).remove();
-
 });
 
 });//end doc.ready
