@@ -14,6 +14,17 @@ firebase.initializeApp(config);
 //var to hold database info
 var database = firebase.database();
 
+//set interval so next arrival and minutes away refreshes every minute
+// setInterval(updateTimes, 60*1000);
+updateClock();
+
+function updateClock(){
+    $("#clock").html(moment().format('HH:mm:ss'));
+}
+
+setInterval(updateClock, 1000);
+setInterval(updateTimes, 1000*60);//change to 60
+
 //reset HTML form to empty
 $("#form")[0].reset();
 
@@ -67,7 +78,7 @@ $("#submit").on("click", function(event){
 database.ref().on("child_added", function(snapshot){
     if (snapshot.val()){
         var data = snapshot.val();
-
+        // console.log(snapshot.key);
         //calculate next arrival
         getTime(); //gets current time
 
@@ -79,6 +90,7 @@ database.ref().on("child_added", function(snapshot){
         //temporary var
         var time = parseInt(f) + parseInt(data.frequency); 
         console.log("temp time (firstTime+freq: "+time);
+        
         var nextArrival;
         var arrivalKnown = false;
 
@@ -87,58 +99,102 @@ database.ref().on("child_added", function(snapshot){
             if (time > currentTime){
                 nextArrival = time;
                 arrivalKnown=true;
-                console.log("nextArr: "+nextArrival);
+                // console.log("nextArr: "+nextArrival);
             }
             else if (time === currentTime){
                 nextArrival = time;
-                console.log("nextArr: "+nextArrival);
+                // console.log("nextArr: "+nextArrival);
                 arrivalKnown=true;
             }
             else {
                 time = parseInt(time) + parseInt(data.frequency);
-                console.log("nextArr is time: "+time);
+                // console.log("nextArr is time: "+time);
             };
             
             //calculate minutes away
             var minAway = parseInt(nextArrival) - parseInt(currentTime);
-            console.log("minAway: "+minAway);
+            // console.log("minAway: "+minAway);
         };
 
-
-
         //create new tr and insert data into html
-        var newTableRow = $("<tr>");
+        var newTableRow = $("<tr id=row->"+snapshot.key);
         var newDataName = $("<td>").text(data.name);
         var newDataDest = $("<td>").text(data.destination);
         var newDataFrequency = $("<td>").text(data.frequency);
-        var newDataNextArrival=$("<td>").text(convertMinutes(nextArrival));
-        var newDataMinutesAway=$("<td>").text(minAway);
+        var newDataNextArrival=$("<td id=nextArr"+snapshot.key+">").text(convertMinutes(nextArrival));
+        var newDataMinutesAway=$("<td id='minAway"+snapshot.key+"'>").text(minAway);
+        console.log(snapshot.key);//-L7VA6-Z0gi8-8jDUxwA
+        var newBtn=$("<td><button class='deleteBtn btn' id='deleteBtn btn'>Delete</button>");
 
-
-        newTableRow.append(newDataName, newDataDest, newDataFrequency, newDataNextArrival, newDataMinutesAway);
+        newTableRow.append(newDataName, newDataDest, newDataFrequency, newDataNextArrival, newDataMinutesAway, newBtn);
         $("tbody").append(newTableRow);
     };//end if statement
 });//end "child_added"
 
+//calculate next arrival and minutes away
+function updateTimes(){
+    database.ref().on("value", function(snapshot){
+        snapshot.forEach(function(childSnap){
+            getTime();
+            console.log(childSnap.key);
+            var data = childSnap.val();
+            console.log(data);
+            var nextArrival;
+            var arrivalKnown = false;
+            var f = data.firstTime.split(":");
+            f = (+f[0]) * 60 + (+f[1]);
+            var time = parseInt(f) + parseInt(data.frequency); 
+
+            //does it work if starting time if beyond current time?
+            while (!arrivalKnown){
+                if (time > currentTime){
+                    nextArrival = time;
+                    arrivalKnown=true;
+                }
+                else if (time === currentTime){
+                    nextArrival = time;
+                    arrivalKnown=true;
+                }
+                else {
+                    time = parseInt(time) + parseInt(data.frequency);
+                };
+                
+                // calculate minutes away
+                var minAway = parseInt(nextArrival) - parseInt(currentTime);
+            };
+            
+            console.log("nextArr: "+nextArrival);
+            console.log("minAway: "+minAway);
+
+
+            $("#nextArr"+childSnap.key).innerHTML =(convertMinutes(nextArrival));
+            console.log("#nextArr"+childSnap.key);
+            
+            $("#nextArr"+childSnap.key).innerText="Hi";
+
+            $("#minAway"+childSnap.key).text(minAway);
+            console.log("#minAway"+childSnap.key);
+        });
+    });
+};//end function updateTimes
+
 //function to get current time
 var currentTime;
 function getTime(){
-    //convert first train time to minutes
-    var rightNow=new Date();
-    var hours = rightNow.getHours();
-    var minutes = rightNow.getMinutes();
-    currentTime= hours * 60 + minutes; //converts current time to minutes
-    console.log("currentTime:"+currentTime); //correct
+    var hours=moment().format("H");
+    var minutes=moment().format("mm");
+    currentTime= parseInt(hours) * 60 + parseInt(minutes); //converts current time to minutes
+    console.log("currentTime:"+currentTime);
 };
 
 //converts minutes into HH:MM
 function convertMinutes(event){
-    console.log("event should be temp time:" +event);//correct
+    console.log("event should be temp time:" +event);
     //event = time in minutes
     var m = event%60;
-    // if (m===0){
-    //     m=00;
-    // };
+    if (m==0){
+        m="00";
+    };
     var h = Math.floor(event/60);
     var convertedTime = h + ":" + m;
     console.log("Should be temp time in HH:MM " +convertedTime);//correct
@@ -150,9 +206,15 @@ function capUpper(name){
     return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
+// $(document).on("click", function(e){
+//     console.log(e);
+//     console.log(            e.target.parentElement.parentElement.id);
+//     // database.ref().once("value", function(snapshot){
+//         // console.log("delete row: "+snapshot.key);
+//     $("#e.target.parentElement.parentElement.id").outerHTML="";
+//     // })
+
+// });
 
 });//end doc.ready
-
-//continually update 
 //users from different machines able to view
-//add extra 0 to end of next arrival time

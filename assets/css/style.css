@@ -3,9 +3,20 @@
     text-align: right;
     color:white;
 }
-.jumbotron{
+/* .jumbotron{
     background-image:url("../images/train.jpg");
     background-size:cover;
+} */
+.header{
+    background-image:url("../images/train.jpg");
+    background-size:cover;
+    height:212px;
+}
+.clock{
+    /* background-color:blue; */
+    color:white;
+    text-align: right;
+    font-size:42px;
 }
 .list-group, .border{
     /* width:75%; */
@@ -27,6 +38,7 @@
 }
 .table{
     margin-bottom:0;
+    text-align: center;
 }
 form{
     padding:10px;
@@ -40,8 +52,11 @@ form label{
     /* color:green; */
     font-size:18px;
 }
-.btn{
+.btn, .deleteBtn{
     background-color:#518c27;
     color:white;
     margin-top:10px;
+}
+.deleteBtn{
+    padding:0px 4px !important;
 }
