@@ -14,14 +14,13 @@ firebase.initializeApp(config);
 //var to hold database info
 var database = firebase.database();
 
-//set interval so next arrival and minutes away refreshes every minute
-// setInterval(updateTimes, 60*1000);
+//virtual clock on webpage
 updateClock();
-
 function updateClock(){
     $("#clock").html(moment().format('HH:mm:ss'));
 }
 
+//set interval so next arrival and minutes away refreshes every minute
 setInterval(updateClock, 1000);
 setInterval(updateTimes, 1000*60);//change to 60
 
@@ -78,8 +77,6 @@ $("#submit").on("click", function(event){
 database.ref().on("child_added", function(snapshot){
     if (snapshot.val()){
         var data = snapshot.val();
-        // console.log(snapshot.key);
-        //calculate next arrival
         getTime(); //gets current time
 
         //convert firstTime (from user input) to minutes
@@ -99,25 +96,21 @@ database.ref().on("child_added", function(snapshot){
             if (time > currentTime){
                 nextArrival = time;
                 arrivalKnown=true;
-                // console.log("nextArr: "+nextArrival);
             }
             else if (time === currentTime){
                 nextArrival = time;
-                // console.log("nextArr: "+nextArrival);
                 arrivalKnown=true;
             }
             else {
                 time = parseInt(time) + parseInt(data.frequency);
-                // console.log("nextArr is time: "+time);
             };
             
             //calculate minutes away
             var minAway = parseInt(nextArrival) - parseInt(currentTime);
-            // console.log("minAway: "+minAway);
         };
 
         //create new tr and insert data into html
-        var newTableRow = $("<tr id=row->"+snapshot.key);
+        var newTableRow = $("<tr id="+snapshot.key+">");
         var newDataName = $("<td>").text(data.name);
         var newDataDest = $("<td>").text(data.destination);
         var newDataFrequency = $("<td>").text(data.frequency);
@@ -159,7 +152,6 @@ function updateTimes(){
                     time = parseInt(time) + parseInt(data.frequency);
                 };
                 
-                // calculate minutes away
                 var minAway = parseInt(nextArrival) - parseInt(currentTime);
             };
             
@@ -183,21 +175,16 @@ var currentTime;
 function getTime(){
     var hours=moment().format("H");
     var minutes=moment().format("mm");
-    currentTime= parseInt(hours) * 60 + parseInt(minutes); //converts current time to minutes
-    console.log("currentTime:"+currentTime);
 };
 
 //converts minutes into HH:MM
 function convertMinutes(event){
-    console.log("event should be temp time:" +event);
-    //event = time in minutes
     var m = event%60;
     if (m==0){
         m="00";
     };
     var h = Math.floor(event/60);
     var convertedTime = h + ":" + m;
-    console.log("Should be temp time in HH:MM " +convertedTime);//correct
     return convertedTime;
 };
 
@@ -206,15 +193,15 @@ function capUpper(name){
     return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
-// $(document).on("click", function(e){
-//     console.log(e);
-//     console.log(            e.target.parentElement.parentElement.id);
-//     // database.ref().once("value", function(snapshot){
-//         // console.log("delete row: "+snapshot.key);
-//     $("#e.target.parentElement.parentElement.id").outerHTML="";
-//     // })
+$(document).on("click", function(e){
+    console.log(e);
+    var rowId=e.target.parentElement.parentElement.id;
+    console.log(rowId);
+    //delete row not working
+    // $(rowId).deleteRow;
+    database.ref().child(rowId).remove();
 
-// });
+});
 
 });//end doc.ready
 //users from different machines able to view
