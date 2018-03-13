@@ -175,6 +175,7 @@ var currentTime;
 function getTime(){
     var hours=moment().format("H");
     var minutes=moment().format("mm");
+    currentTime=parseInt(hours) * 60 + parseInt(minutes);
 };
 
 //converts minutes into HH:MM
