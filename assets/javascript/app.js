@@ -17,7 +17,7 @@ var database = firebase.database();
 //virtual clock on webpage
 updateClock();
 function updateClock(){
-    $("#clock").html(moment().format('HH:mm:ss'));
+    $("#clock").html(moment().format('LTS'));
 }
 
 //set interval so next arrival and minutes away refreshes every minute
@@ -56,10 +56,6 @@ $("#submit").on("click", function(event){
         var frequency=$("#train-frequency").val().trim();
         console.log(trainName, dest, firstTime, frequency);
 
-    // if (snapshot.child("name").exists() && snapshot.child("otherName").exists()){
-    //     set them;
-    // }
-
     //conditional to keep out blank info
     if(trainName!="" && dest!="" && firstTime!="" && frequency!=""){
     //store info for each train in new database object:
@@ -82,16 +78,17 @@ database.ref().on("child_added", function(snapshot){
         //convert firstTime (from user input) to minutes
         var f = data.firstTime.split(":");
         f = (+f[0]) * 60 + (+f[1]);
-        console.log("firstTime in min:"+f);
 
-        //temporary var
+        //makes sure firstTime is before currentTime
+        if (f > currentTime) {
+            f = f - 1440;
+        };
+
         var time = parseInt(f) + parseInt(data.frequency); 
-        console.log("temp time (firstTime+freq: "+time);
-        
+
         var nextArrival;
         var arrivalKnown = false;
 
-        //does it work if starting time if beyond current time?
         while (!arrivalKnown){
             if (time > currentTime){
                 nextArrival = time;
@@ -105,8 +102,10 @@ database.ref().on("child_added", function(snapshot){
                 time = parseInt(time) + parseInt(data.frequency);
             };
             
-            //calculate minutes away
             var minAway = parseInt(nextArrival) - parseInt(currentTime);
+            if (minAway===0){
+                minAway = "Now Boarding";
+            };
         };
 
         //create new tr and insert data into html
@@ -116,12 +115,11 @@ database.ref().on("child_added", function(snapshot){
         var newDataFrequency = $("<td>").text(data.frequency);
         var newDataNextArrival=$("<td id=nextArr"+snapshot.key+">").text(convertMinutes(nextArrival));
         var newDataMinutesAway=$("<td id='minAway"+snapshot.key+"'>").text(minAway);
-        console.log(snapshot.key);//-L7VA6-Z0gi8-8jDUxwA
         var newBtn=$("<td><button class='deleteBtn btn' id='deleteBtn btn'>Delete</button>");
 
         newTableRow.append(newDataName, newDataDest, newDataFrequency, newDataNextArrival, newDataMinutesAway, newBtn);
         $("tbody").append(newTableRow);
-    };//end if statement
+    };
 });//end "child_added"
 
 //calculate next arrival and minutes away
@@ -129,16 +127,21 @@ function updateTimes(){
     database.ref().on("value", function(snapshot){
         snapshot.forEach(function(childSnap){
             getTime();
-            console.log(childSnap.key);
             var data = childSnap.val();
-            console.log(data);
-            var nextArrival;
-            var arrivalKnown = false;
+
             var f = data.firstTime.split(":");
             f = (+f[0]) * 60 + (+f[1]);
+
+            //makes sure firstTime is before currentTime
+            if (f > currentTime) {
+                f = f - 1440;
+            };
+
             var time = parseInt(f) + parseInt(data.frequency); 
 
-            //does it work if starting time if beyond current time?
+            var nextArrival;
+            var arrivalKnown = false;
+
             while (!arrivalKnown){
                 if (time > currentTime){
                     nextArrival = time;
@@ -153,19 +156,13 @@ function updateTimes(){
                 };
                 
                 var minAway = parseInt(nextArrival) - parseInt(currentTime);
+                if (minAway===0){
+                    minAway = "Now Boarding";
+                };
             };
-            
-            console.log("nextArr: "+nextArrival);
-            console.log("minAway: "+minAway);
 
-
-            $("#nextArr"+childSnap.key).innerHTML =(convertMinutes(nextArrival));
-            console.log("#nextArr"+childSnap.key);
-            
-            $("#nextArr"+childSnap.key).innerText="Hi";
-
+            $("#nextArr"+childSnap.key).text(convertMinutes(nextArrival));
             $("#minAway"+childSnap.key).text(minAway);
-            console.log("#minAway"+childSnap.key);
         });
     });
 };//end function updateTimes
@@ -178,15 +175,12 @@ function getTime(){
     currentTime=parseInt(hours) * 60 + parseInt(minutes);
 };
 
-//converts minutes into HH:MM
+// converts minutes to HH:MM
 function convertMinutes(event){
     var m = event%60;
-    if (m==0){
-        m="00";
-    };
     var h = Math.floor(event/60);
-    var convertedTime = h + ":" + m;
-    return convertedTime;
+    var convertedTime;
+    return moment.utc().hours(h).minutes(m).format("hh:mm A");
 };
 
 //Capitalize first letter of train name and destination
@@ -194,21 +188,10 @@ function capUpper(name){
     return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
-// $(document).on("click", "#deleteBtn", function(e){
-//     console.log(e);
-//     var rowId=e.target.parentElement.parentElement.id;
-//     console.log(rowId);
-//     //delete row not working
-//     // $(rowId).deleteRow;
-//     database.ref().child(rowId).remove();
-// });
+$(document).on("click", ".deleteBtn", function(e){
+    var rowId=e.target.parentElement.parentElement.id;
+    $(this).parents('tr').remove(); //removes tr
+    database.ref().child(rowId).remove(); //removes info from db
+});
 
 });//end doc.ready
-
-// delete row on html
-
-// Users from many different machines must be able to view same train times.
-
-// As a final challenge, make it so that only users who log into the site with their Google or GitHub accounts can use your site. You'll need to read up on Firebase authentication for this bonus exercise.
-
-// Try adding update button for each train. Let the user edit the row's elements-- allow them to change a train's Name, Destination and Arrival Time (and then, by relation, minutes to arrival).
